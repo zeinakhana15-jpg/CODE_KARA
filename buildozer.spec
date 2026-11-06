@@ -1,18 +1,36 @@
-[app]
-title = CODE KARA
-package.name = codekara
-package.domain = org.kara
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,ttf
-version = 1.0
-requirements = python3,kivy==2.3.0
-orientation = portrait
-fullscreen = 0
-android.archs = arm64-v8a, armeabi-v7a
-android.api = 33
-android.minapi = 21
-android.accept_sdk_license = True
+name: Build APK
 
-[buildozer]
-log_level = 2
-warn_on_root = 1
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential ccache
+          pip install --upgrade pip cython==0.29.36 buildozer virtualenv
+
+      - name: Build APK
+        run: buildozer -v android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CODE_KARA-apk
+          path: bin/*.apk
